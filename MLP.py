@@ -58,7 +58,7 @@ plt.plot(vel)
 
 #Bring in the LFP data
 data_holder = []
-num_channels = 5
+num_channels = 7
 for iiii in range(89,89+num_channels):
     chan = loadmat(f'CSC{iiii}.mat')
     data = chan['data'][0]
@@ -78,11 +78,13 @@ flat_data = [item for sublist in data_holder for item in sublist]
 min_value = min(flat_data)
 max_value = max(flat_data)
 
-data_holder = [[(x - min_value) / (max_value - min_value) for x in row] for row in data_holder]
+data_holder = [[((2*(x - min_value)) / (max_value - min_value))-1 for x in row] for row in data_holder]
 
 
 data_holder = np.array(data_holder)
 input_data = data_holder.T
+
+print(input_data)
 
 
 #rawdata = (rawdata - np.min(rawdata)) / (np.max(rawdata) - np.min(rawdata))
@@ -100,9 +102,9 @@ input_data = data_holder.T
 
 #Inner size of encoder and decoder ###MUST MATCH
 #This might be a mistake
-encoder_sizes = [num_channels,4,4,3]
+encoder_sizes = [num_channels,6,5,4,3]
 latent_space_size = 2
-decoder_sizes = [3,4,4,num_channels]
+decoder_sizes = [3,4,5,6,num_channels]
 
 def make_net(encoder_sizes,latent_space_size,decoder_sizes):  
     #Initilize the network to have random weights between 0 and 1.
@@ -319,7 +321,10 @@ def backprop(xis,mlp_weights,encoder_sizes,latent_space_size,decoder_sizes,eta,k
         
         xiwis = sum(xiwis)
               
-        super_delta_guy.append(((1/xis[-len(decoder_sizes)-2][0][m])-xis[-len(decoder_sizes)-2][0][m])*xiwis)
+        
+        #RIGHT NOW THIS IS POSITIVE KL
+              
+        super_delta_guy.append(((-1/xis[-len(decoder_sizes)-2][0][m])+xis[-len(decoder_sizes)-2][0][m])*xiwis)
         
        
         #print(len(weight_sets))
@@ -366,8 +371,10 @@ def backprop(xis,mlp_weights,encoder_sizes,latent_space_size,decoder_sizes,eta,k
             xiwis.append(mlp_weights[len(encoder_sizes)][k][m]*deltas[-1][k])
             
         xiwis = sum(xiwis)
+        
+        #RIGHT NOW THIS IS POSITIVE KL
               
-        super_delta_guy.append(-xis[-len(decoder_sizes)-2][1][m]*xiwis)
+        super_delta_guy.append(xis[-len(decoder_sizes)-2][1][m]*xiwis)
         
         
         for k in range(len(weight_sets)):
@@ -538,10 +545,10 @@ mlp_weights = make_net(encoder_sizes,latent_space_size,decoder_sizes)
 kl_lambda = 1
 
 #learning rate
-eta = 0.001
+eta = 0.1
 
 #Set number of epochs
-epochs = 100
+epochs = 20
 
 loss_track_over_epoch = []
 
