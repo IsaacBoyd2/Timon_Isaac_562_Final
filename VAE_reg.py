@@ -339,7 +339,7 @@ insta_vel = [(x - min(insta_vel)) / (max(insta_vel) - min(insta_vel)) for x in i
 
 #Bring in the LFP data
 data_holder = []
-num_channels = 5
+num_channels = 54
 for iiii in range(89,89+num_channels):
     chan = loadmat(f'CSC{iiii}.mat')
     data = chan['data'][0]
@@ -370,9 +370,9 @@ input_data = data_holder.T
 
 
 #Define network shape
-encoder_sizes = [num_channels,3]
-latent_space_size = 2
-decoder_sizes = [3,num_channels]
+encoder_sizes = [num_channels,20]
+latent_space_size = 10
+decoder_sizes = [20,num_channels]
 
 #Define hyperparameters
 
@@ -380,7 +380,7 @@ kl_lambda = 100
 Y_val = 1
 
 #learning rate
-eta = 0.01
+eta = 0.001
 
 #Set number of epochs
 epochs = 100
@@ -397,6 +397,9 @@ for pocs in range(epochs):
     recon_loss = []
     kl_loss = []
     custom_loss_tot = []
+    chan1og = []
+    chan1re = []
+    
     for lk in range(len(data_holder[0])):
         e_input = input_data[lk]
         #Do forwards propegation
@@ -420,14 +423,17 @@ for pocs in range(epochs):
         recon_loss.append(recon)
         kl_loss.append(kl)
         
-    '''print('recon_loss')
+        chan1og.append(xis[0][0])
+        chan1re.append(xis[-1][0])
+        
+    print('recon_loss')
     print(np.mean(recon_loss))
-    print('kl_loss')
-    print(np.mean(kl_loss))
-    print('\n')
-    print('custom_loss')
-    print(sum(custom_loss_tot))
-    print('\n')'''
+    #print('kl_loss')
+    #print(np.mean(kl_loss))
+    #print('\n')
+    #print('custom_loss')
+    #print(sum(custom_loss_tot))
+    #print('\n')
 
 
 
@@ -462,12 +468,31 @@ indices_of_nans2 = np.where(nan_indices2)[0]
 # Remove elements based on indices
 insta_vel2 = [value for index, value in enumerate(insta_vel2) if index not in indices_of_nans2]
 insta_vel2 = [(x - min(insta_vel2)) / (max(insta_vel2) - min(insta_vel2)) for x in insta_vel2]
-param2 = [89,90,91,92,93]
 
+
+'''averaged_chan1og = []
+averaged_chan1re = [] 
+
+
+for j in range(len(chan1og)-50):
+    averaged_chan1og.append(np.mean(chan1og[j:j+50]))
+    averaged_chan1re.append(np.mean(chan1re[j:j+50]))'''
+
+fig = plt.figure(8)
+plt.plot(chan1og[250:350],'k')
+plt.plot(chan1re[250:350],'c')
+#plt.ylim(0.25, 0.75)
+
+plt.xlabel('Trial')
+plt.ylabel('Magnitude')
+plt.title('VAE - reconstruction visualization')
+
+plt.show()
 
 
 test_data_holder = []   
-for nk in param2:
+num_channels = 54
+for iiii in range(89,89+num_channels):
     chan = loadmat(f'CSC{iiii}_5.mat')
     data = chan['data'][0]
     #Account for the velocity calculation
@@ -623,9 +648,9 @@ def make_net2(layer_sizes):
 #############################################################################################################################################
 #############################################################################################################################################
 
-layer_sizes = [2,5,1]
+layer_sizes = [10,1]
 epochs = 1000
-eta = 0.001
+eta = 0.00005
 
 mlp_weights = make_net2(layer_sizes)
 
